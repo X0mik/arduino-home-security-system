@@ -19,6 +19,8 @@ const int pin_pirB = 21;
 
 volatile bool motionDetected = false;
 
+int wrong_pass = 0;
+
 char keys[rows][cols] = {
   {'1', '2', '3', 'A'},
   {'4', '5', '6', 'B'},
@@ -134,6 +136,7 @@ void loop()
         }
       }
       if(correctPass){
+        wrong_pass = 0;
         display.setCursor(0,1);
         display.print("SPRAVNE HESLO");
         if(stav == State::ODEMCENO){
@@ -148,6 +151,11 @@ void loop()
         tone(45, 2500, 100);
       }
       else{
+        wrong_pass += 1;
+          if(wrong_pass >=3){
+            wrong_pass = 0;
+            setState(State::POPLACH);
+          }
         tone(45, 500, 150);
         clearRow(1);
         display.setCursor(0,1);
@@ -228,6 +236,7 @@ void setState(State state){
   noTone(45);
   switch(stav){
     case State::ZAMCENO:
+      motionDetected = false;
       attachInterrupt(digitalPinToInterrupt(pin_pirP), detect, RISING);
       attachInterrupt(digitalPinToInterrupt(pin_pirB), detect, RISING);
       display.print("Stav: ZAMCENO");
