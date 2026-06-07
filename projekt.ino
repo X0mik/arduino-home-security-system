@@ -49,6 +49,12 @@ enum State{
   ODEMCENO,
   POPLACH
 };
+enum Color{
+    RED,
+    GREEN,
+    BLUE,
+    OFF
+  };
 
 State stav = State::ODEMCENO;
 
@@ -71,7 +77,7 @@ void setup()
 void loop()
 {
   time = millis();
-  
+
   keypadFunc();
   bluetoothFunc();
 
@@ -103,7 +109,8 @@ void setState(State state){
       display.print("Stav: ZAMCENO");
       Serial3.print("ZAMCENO|");
       servo.write(0);
-      color(0,0,255);
+      setLed(BLUE);
+      //color(0,0,255);
       break;
     case State::ODEMCENO:
       detachInterrupt(digitalPinToInterrupt(pin_pirP));
@@ -111,7 +118,8 @@ void setState(State state){
       display.print("Stav: ODEMCENO");
       Serial3.print("ODEMCENO|");
       servo.write(180);
-      color(0,255,0);
+      setLed(GREEN);
+      //color(0,255,0);
       break;
     case State::POPLACH:
       display.print("!!! POPLACH !!!");
@@ -187,11 +195,11 @@ void keypadFunc(){
     if(time - previousTime >= 500){
         previousTime = time;
         if(alarmLedOn){
-          color(255,0,0);
+          setLed(RED);
           tone(45, 4000);
         }
         else{
-          color(0,0,0);
+          setLed(OFF);
           tone(45, 3000);
         }
         alarmLedOn = !alarmLedOn;
@@ -258,6 +266,26 @@ void keypadFunc(){
       display.setCursor(0,1);
       display.print("NOVY PIN: ");
     }
+  }
+}
+
+
+
+void setLed(Color clr){
+  
+  switch(clr){
+    case Color::RED:
+      color(255, 0, 0);
+      break;
+    case Color::GREEN:
+      color(0, 255, 0);
+      break;
+    case Color::BLUE:
+      color(0, 0, 255);
+      break;
+    case Color::OFF:
+      color(0, 0, 0);
+      break;
   }
 }
 
