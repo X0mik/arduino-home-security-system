@@ -145,7 +145,7 @@ void keypadFunc(){
 
   }
 
-  if(key == 'B'){
+  /*if(key == 'B'){
     setState(State::ODEMCENO);
   }
   else if(key == 'C'){
@@ -153,7 +153,7 @@ void keypadFunc(){
   }
   else if(key == 'D'){
     setState(State::POPLACH);
-  }
+  }*/
 
   if(isDigit(key) && pass.length() < 4){
     pass += key;
