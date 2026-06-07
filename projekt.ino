@@ -71,149 +71,10 @@ void setup()
 void loop()
 {
   time = millis();
-  char key = keypad.getKey();
+  
+  keypadFunc();
+  bluetoothFunc();
 
-  if(key){
-    Serial.println(key);
-    if(stav != State::POPLACH){
-      if(isDigit(key) && pass.length() < 4){
-        tone(45, 2000, 50);
-      }
-      else if(isDigit(key) && pass.length() >= 4){
-        tone(45, 500, 150);
-      }
-
-    }
-  }
-  if(key == 'B'){
-    setState(State::ODEMCENO);
-  }
-  else if(key == 'C'){
-    setState(State::ZAMCENO);
-  }
-  else if(key == 'D'){
-    setState(State::POPLACH);
-  }
-
-  if(isDigit(key) && pass.length() < 4){
-    pass += key;
-    clearRow(1);
-    //if(pass != ""){
-      display.setCursor(0,1);
-      encrPass = "";
-      for(int i = 0; i < pass.length(); i++){
-        encrPass += "*";
-      }
-      if(newPin){
-        display.print("NOVY PIN: " + encrPass);
-      }
-      else{
-        display.print("PIN: " + encrPass);
-      }
-    //}
-  }
-
-  if (pass.length() == 4 && key == '#'){
-    clearRow(1);
-    if(newPin){
-      tone(45, 2500, 100);
-      for(int i = 0; i < pass.length(); i++){
-        EEPROM.write(i, pass[i]);
-      }
-      newPin = false;
-      display.setCursor(0,1);
-      display.print("PIN ULOZEN");
-    }
-    else{
-      for(int i = 0; i < pass.length(); i++){
-        correctPass = true;
-        if(pass[i] != EEPROM.read(i)){
-          /*display.setCursor(0,1);
-          display.print("SPATNE HESLO!");
-          setState(State::POPLACH);*/
-          correctPass = false;
-          break;
-        }
-      }
-      if(correctPass){
-        wrong_pass = 0;
-        display.setCursor(0,1);
-        display.print("SPRAVNE HESLO");
-        if(stav == State::ODEMCENO){
-          setState(State::ZAMCENO);
-        }
-        else if(stav == State::ZAMCENO){
-          setState(State::ODEMCENO);
-        }
-        else if(stav == State::POPLACH){
-          setState(State::ODEMCENO);
-        }
-        tone(45, 2500, 100);
-      }
-      else{
-        wrong_pass += 1;
-          if(wrong_pass >=3){
-            wrong_pass = 0;
-            setState(State::POPLACH);
-          }
-        tone(45, 500, 150);
-        clearRow(1);
-        display.setCursor(0,1);
-        display.print("SPATNE HESLO!");
-        //setState(State::POPLACH);
-      }
-    }
-    pass = "";
-    delay(2000);
-    clearRow(1);
-  }
-
-  if (key == 'A' && stav == State::ODEMCENO){
-    clearRow(1);
-    if(newPin){
-      newPin = false;
-    }
-    else{
-      newPin = true;
-      display.setCursor(0,1);
-      display.print("NOVY PIN: ");
-    }
-  }
-
-  if(stav == State::POPLACH){
-    if(time - previousTime >= 500){
-        previousTime = time;
-        if(alarmLedOn){
-          color(255,0,0);
-          tone(45, 4000);
-        }
-        else{
-          color(0,0,0);
-          tone(45, 3000);
-        }
-        alarmLedOn = !alarmLedOn;
-    }
-  }
-
-  if(Serial3.available() > 0){
-    btText = Serial3.readStringUntil('|');
-    if(btText == "ZAMCENO"){
-      setState(State::ZAMCENO);
-    }
-    else if(btText == "ODEMCENO"){
-      setState(State::ODEMCENO);
-    }
-    else if(btText.length() == 4 /*&& isDigit(btText)*/){
-      for(int i = 0; i<4; i++){
-        EEPROM.write(i, btText[i]);
-      }
-      clearRow(1);
-      display.setCursor(0,1);
-      display.print("PIN ULOZEN");
-      delay(2000);
-      clearRow(1);
-    }
-  }
   if(motionDetected){
     motionDetected = false;
     if(stav == State::ZAMCENO){
@@ -268,4 +129,156 @@ void clearRow(int row){
 void detect(){
   //setState(State::POPLACH);
   motionDetected = true;
+}
+
+void pinToEEPROM(){
+  tone(45, 2500, 100);
+  for(int i = 0; i < pass.length(); i++){
+    EEPROM.write(i, pass[i]);
+  }
+  newPin = false;
+  display.setCursor(0,1);
+  display.print("PIN ULOZEN");
+}
+
+void passCheck(){
+  for(int i = 0; i < pass.length(); i++){
+    correctPass = true;
+    if(pass[i] != EEPROM.read(i)){
+       /*display.setCursor(0,1);
+       display.print("SPATNE HESLO!");
+       setState(State::POPLACH);*/
+       correctPass = false;
+      break;
+    }
+  }
+  if(correctPass){
+    wrong_pass = 0;
+    display.setCursor(0,1);
+    display.print("SPRAVNE HESLO");
+    if(stav == State::ODEMCENO){
+      setState(State::ZAMCENO);
+    }
+    else if(stav == State::ZAMCENO){
+      setState(State::ODEMCENO);
+    }
+    else if(stav == State::POPLACH){
+      setState(State::ODEMCENO);
+    }
+    tone(45, 2500, 100);
+  }
+  else{
+    wrong_pass += 1;
+      if(wrong_pass >=3){
+        wrong_pass = 0;
+        setState(State::POPLACH);
+      }
+    tone(45, 500, 150);
+    clearRow(1);
+    display.setCursor(0,1);
+    display.print("SPATNE HESLO!");
+    //setState(State::POPLACH);
+  }
+}
+
+void keypadFunc(){
+  char key = keypad.getKey();
+  if(stav == State::POPLACH){
+    if(time - previousTime >= 500){
+        previousTime = time;
+        if(alarmLedOn){
+          color(255,0,0);
+          tone(45, 4000);
+        }
+        else{
+          color(0,0,0);
+          tone(45, 3000);
+        }
+        alarmLedOn = !alarmLedOn;
+    }
+  }
+  else{
+    if(isDigit(key) && pass.length() < 4){
+      tone(45, 2000, 50);
+    }
+    else if(isDigit(key) && pass.length() >= 4){
+      tone(45, 500, 150);
+    }
+
+  }
+
+  if(key == 'B'){
+    setState(State::ODEMCENO);
+  }
+  else if(key == 'C'){
+    setState(State::ZAMCENO);
+  }
+  else if(key == 'D'){
+    setState(State::POPLACH);
+  }
+
+  if(isDigit(key) && pass.length() < 4){
+    pass += key;
+    clearRow(1);
+    //if(pass != ""){
+      display.setCursor(0,1);
+      encrPass = "";
+      for(int i = 0; i < pass.length(); i++){
+        encrPass += "*";
+      }
+      if(newPin){
+        display.print("NOVY PIN: " + encrPass);
+      }
+      else{
+        display.print("PIN: " + encrPass);
+      }
+    //}
+  }
+
+  if (pass.length() == 4 && key == '#'){
+    clearRow(1);
+    if(newPin){
+      pinToEEPROM();
+    }
+    else{
+      passCheck();
+    }
+    pass = "";
+    delay(2000);
+    clearRow(1);
+  }
+
+  if (key == 'A' && stav == State::ODEMCENO){
+    clearRow(1);
+    if(newPin){
+      newPin = false;
+    }
+    else{
+      newPin = true;
+      display.setCursor(0,1);
+      display.print("NOVY PIN: ");
+    }
+  }
+}
+
+void bluetoothFunc(){
+  if(Serial3.available() > 0){
+    btText = Serial3.readStringUntil('|');
+    if(btText == "ZAMCENO"){
+      setState(State::ZAMCENO);
+    }
+    else if(btText == "ODEMCENO"){
+      setState(State::ODEMCENO);
+    }
+    else if(btText.length() == 4 /*&& isDigit(btText)*/){
+      for(int i = 0; i<4; i++){
+        EEPROM.write(i, btText[i]);
+      }
+      clearRow(1);
+      display.setCursor(0,1);
+      display.print("PIN ULOZEN");
+      delay(2000);
+      clearRow(1);
+    }
+  }
 }
